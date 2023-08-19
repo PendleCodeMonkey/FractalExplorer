@@ -1,0 +1,214 @@
+﻿<Window x:Class="PendleCodeMonkey.FractalExplorer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PendleCodeMonkey.FractalExplorer"
+        mc:Ignorable="d"
+        Title="Fractal Explorer" Height="850" Width="1200" Loaded="Window_Loaded" SizeChanged="Window_SizeChanged">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static local:MainWindow.PresetCmd}"
+                    Executed="PresetCmdExecuted"
+                    CanExecute="PresetCanExecute"/>
+        <CommandBinding Command="{x:Static local:MainWindow.ResetButtonCmd}"
+                    Executed="ResetButtonCmdExecuted"
+                    CanExecute="ResetButtonCanExecute"/>
+        <CommandBinding Command="{x:Static local:MainWindow.SaveButtonCmd}"
+                    Executed="SaveButtonCmdExecuted"
+                    CanExecute="SaveButtonCanExecute"/>
+        <CommandBinding Command="{x:Static local:MainWindow.PresetButtonCmd}"
+                    Executed="PresetButtonCmdExecuted"
+                    CanExecute="PresetButtonCanExecute"/>
+    </Window.CommandBindings>
+    <Window.Resources>
+        <local:EnumMatchToBoolConverter x:Key="enumConverter" />
+        <ContextMenu x:Key="PresetContextMenu">
+            <MenuItem Header="0.285 + 0i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="1"/>
+            <MenuItem Header="0.285 + 0.01i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="2"/>
+            <MenuItem Header="-0.4 + 0.6i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="3"/>
+            <MenuItem Header="0.45 + 0.1428i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="4"/>
+            <MenuItem Header="-0.70176 - 0.3842i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="5"/>
+            <MenuItem Header="-0.835 - 0.2321i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="6"/>
+            <MenuItem Header="-0.8 + 0.156i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="7"/>
+            <MenuItem Header="-0.7269 + 0.1889i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="8"/>
+            <MenuItem Header="0.8i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="9"/>
+            <MenuItem Header="0.37 + 0.1i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="10"/>
+            <MenuItem Header="0.355 + 0.355i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="11"/>
+            <MenuItem Header="-0.4 - 0.59i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="12"/>
+            <MenuItem Header="0.34 - 0.05i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="13"/>
+            <MenuItem Header="-0.54 + 0.54i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="14"/>
+            <MenuItem Header="-0.355534 - 0.337292i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="15"/>
+            <MenuItem Header="0.26 - 0.0015i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="16"/>
+            <MenuItem Header="0.26 - 0.0016i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="17"/>
+            <MenuItem Header="-0.75 + 0.37i" Command="{x:Static local:MainWindow.PresetCmd}" CommandParameter="18"/>
+        </ContextMenu>
+        <ControlTemplate x:Key="ValidationTemplate">
+            <DockPanel>
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                    <Grid Width="14" Height="14">
+                        <Ellipse Width="14" Height="14" 
+                            Fill="Red" HorizontalAlignment="Center" 
+                            VerticalAlignment="Center">
+                        </Ellipse>
+                        <TextBlock Foreground="White" FontWeight="Heavy" 
+                            FontSize="8" HorizontalAlignment="Center" 
+                            VerticalAlignment="Center" TextAlignment="Center"
+                           ToolTip="{Binding ElementName=ErrorAdorner, 
+                           Path=AdornedElement.(Validation.Errors)/ErrorContent}"
+                       >!</TextBlock>
+                    </Grid>
+                </StackPanel>
+                <AdornedElementPlaceholder x:Name="ErrorAdorner" ></AdornedElementPlaceholder>
+            </DockPanel>
+        </ControlTemplate>
+
+        <Style x:Key="TextBoxInError" TargetType="{x:Type TextBox}">
+            <Style.Triggers>
+                <Trigger Property="Validation.HasError" Value="true">
+                    <Setter Property="ToolTip"
+              Value="{Binding RelativeSource={RelativeSource Self},
+                              Path=(Validation.Errors)/ErrorContent}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="10"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="10"/>
+            <RowDefinition/>
+            <RowDefinition Height="10"/>
+        </Grid.RowDefinitions>
+        <Border Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="Black" BorderThickness="1">
+            <Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="Silver" BorderThickness="8">
+                <Border x:Name="ImageBorder" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="Black" BorderThickness="1">
+                    <StackPanel x:Name="stackP" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                        <Grid x:Name="ParentGrid" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" MouseLeftButtonDown="Grid_MouseLeftButtonDown" MouseMove="ParentGrid_MouseMove" PreviewMouseLeftButtonUp="ParentGrid_PreviewMouseLeftButtonUp" MouseLeave="ParentGrid_MouseLeave">
+                            <Image x:Name="img" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                            <Rectangle x:Name="SelectionRect" Width="80" Height="80" Visibility="Hidden" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20" Stroke="White" StrokeThickness="2" Opacity="0.5" Fill="Silver"></Rectangle>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Border>
+        <DockPanel Grid.Row="1" Grid.Column="2" LastChildFill="false">
+            <StackPanel DockPanel.Dock="Top">
+                <GroupBox Header="Fractal Type" Margin="4">
+                    <StackPanel>
+                        <RadioButton x:Name="MandelbrotSetRadioButton" Content="Mandelbrot Set" HorizontalAlignment="Left" Margin="8,8,0,0" VerticalAlignment="Top"
+                                         Checked="FractalTypeRadioButton_Checked"
+                                         IsChecked="{Binding Path=FractalType, Mode=TwoWay, 
+                                             Converter={StaticResource enumConverter},
+                                             ConverterParameter=Mandelbrot}" />
+                        <RadioButton x:Name="JuliaSetRadioButton" Content="Julia Set" HorizontalAlignment="Left" Margin="8,8,0,8" VerticalAlignment="Top"
+                                         Checked="FractalTypeRadioButton_Checked"
+                                         IsChecked="{Binding Path=FractalType, Mode=TwoWay, 
+                                             Converter={StaticResource enumConverter},
+                                             ConverterParameter=Julia}" />
+                    </StackPanel>
+                </GroupBox>
+                <StackPanel Orientation="Horizontal" Margin="4">
+                    <Label Content="Max Iterations:" HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBox x:Name="MaxIterationsTextBox" HorizontalAlignment="Left" Margin="0,0,10,0" TextWrapping="Wrap" VerticalAlignment="Center"
+                                     Validation.ErrorTemplate="{StaticResource ValidationTemplate}"
+                                     Style="{StaticResource TextBoxInError}" Width="80" LostFocus="MaxIterationsTextBox_LostFocus">
+                        <TextBox.Text>
+                            <Binding Path="MaxIterations"
+                                        UpdateSourceTrigger="LostFocus" >
+                                <Binding.ValidationRules>
+                                    <local:IntegerRangeRule Min="10" Max="2000"/>
+                                </Binding.ValidationRules>
+                            </Binding>
+                        </TextBox.Text>
+                    </TextBox>
+                </StackPanel>
+                <GroupBox Header="Julia Set Parameters" Margin="4" IsEnabled="{Binding Path = IsChecked, ElementName = JuliaSetRadioButton}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Label Content="c Real:" HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBox x:Name="CRealTextBox" Grid.Column="1" HorizontalAlignment="Left" Margin="0,0,10,0" TextWrapping="Wrap" VerticalAlignment="Center"
+                                     Validation.ErrorTemplate="{StaticResource ValidationTemplate}"
+                                     Style="{StaticResource TextBoxInError}" Width="80" LostFocus="CRealTextBox_LostFocus">
+                            <TextBox.Text>
+                                <Binding Path="JuliaCReal"
+                                        UpdateSourceTrigger="LostFocus" >
+                                    <Binding.ValidationRules>
+                                        <local:FloatRangeRule Min="-2.0" Max="2.0"/>
+                                    </Binding.ValidationRules>
+                                </Binding>
+                            </TextBox.Text>
+                        </TextBox>
+                        <Label Content="c Imaginary:" Grid.Row="1" HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBox x:Name="CImaginaryTextBox" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" Margin="0,0,10,0" TextWrapping="Wrap" VerticalAlignment="Center"
+                                     Validation.ErrorTemplate="{StaticResource ValidationTemplate}"
+                                     Style="{StaticResource TextBoxInError}" Width="80" LostFocus="CImaginaryTextBox_LostFocus">
+                            <TextBox.Text>
+                                <Binding Path="JuliaCImg"
+                                        UpdateSourceTrigger="LostFocus" >
+                                    <Binding.ValidationRules>
+                                        <local:FloatRangeRule Min="-2.0" Max="2.0"/>
+                                    </Binding.ValidationRules>
+                                </Binding>
+                            </TextBox.Text>
+                        </TextBox>
+                        <Button x:Name="SelectPresetButton" Content="Select Preset" Grid.Row="2" Grid.ColumnSpan="2" Margin="16,2,16,2" Command="{x:Static local:MainWindow.PresetButtonCmd}"/>
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Colour Theme" Margin="4">
+                    <StackPanel Margin="2,4,2,4">
+                        <ComboBox Margin="4,4,4,8" HorizontalAlignment="Stretch" ItemsSource="{Binding ThemeNames}"
+                                  SelectedItem="{Binding SelectedThemeName, Mode=TwoWay}" SelectionChanged="ComboBox_SelectionChanged">
+                            <ComboBox.ItemTemplateSelector>
+                                <local:ComboBoxItemTemplateSelector>
+                                    <local:ComboBoxItemTemplateSelector.SelectedTemplate>
+                                        <DataTemplate>
+                                            <Grid HorizontalAlignment="Stretch">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Text="{Binding}" Width="120" HorizontalAlignment="Stretch"/>
+                                                <local:ColourThemeControl ThemeName="{Binding}" Grid.Row="1" Height="20" Margin="0,0,0,4" HorizontalAlignment="Stretch"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </local:ComboBoxItemTemplateSelector.SelectedTemplate>
+                                    <local:ComboBoxItemTemplateSelector.DropDownTemplate>
+                                        <DataTemplate>
+                                            <Grid HorizontalAlignment="Stretch">
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto"/>
+                                                    <RowDefinition Height="Auto"/>
+                                                </Grid.RowDefinitions>
+                                                <TextBlock Text="{Binding}" Width="120" HorizontalAlignment="Stretch"/>
+                                                <local:ColourThemeControl ThemeName="{Binding}" Grid.Row="1" Height="20" Margin="0,0,0,4" HorizontalAlignment="Stretch"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </local:ComboBoxItemTemplateSelector.DropDownTemplate>
+                                </local:ComboBoxItemTemplateSelector>
+                            </ComboBox.ItemTemplateSelector>
+                        </ComboBox>
+                        <CheckBox Content="Reverse Palette" Margin="4" IsChecked="{Binding ReverseColours, Mode=TwoWay}" Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
+                        <CheckBox Content="Force Black As First Colour" Margin="4" IsChecked="{Binding ForceBlackAsFirstColour, Mode=TwoWay}"  Checked="CheckBox_CheckedChanged" Unchecked="CheckBox_CheckedChanged"/>
+                    </StackPanel>
+                </GroupBox>
+                <Button x:Name="SaveButton" Content="Save Fractal Image" HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="8"
+                        Padding="8" Command="{x:Static local:MainWindow.SaveButtonCmd}">
+                </Button>
+            </StackPanel>
+            <Button x:Name="ResetButton" Content="Reset Zoom" DockPanel.Dock="Bottom" HorizontalAlignment="Stretch" VerticalAlignment="Top"
+                    Margin="8" Padding="8" Command="{x:Static local:MainWindow.ResetButtonCmd}"/>
+        </DockPanel>
+    </Grid>
+</Window>
